@@ -1,0 +1,161 @@
+{
+  "info": {
+    "name": "AI Free Text Pro API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Humanize and detect AI text with one REST call.\n\n1. Create a key at https://developer.aifreetextpro.com/keys (500 free tokens on sign-up).\n2. Set the collection variable `apiKey` to your key.\n3. Send a request.\n\nDocs: https://aifreetextpro.com/api/docs\n\nHumanize costs 1 token per word (up to 5,000 words); detect costs 1 token per 5 words (up to 50,000 characters). Failed requests are not charged."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{apiKey}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.aifreetextpro.com/v1"
+    },
+    {
+      "key": "apiKey",
+      "value": "sk_live_your_key_here"
+    }
+  ],
+  "item": [
+    {
+      "name": "Humanize text",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Artificial intelligence has transformed the way businesses operate. It enables companies to automate repetitive tasks, analyze large datasets, and make informed decisions.\",\n  \"style\": \"professional\",\n  \"strength\": \"strong\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/humanize",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "humanize"
+          ]
+        },
+        "description": "Rewrites the text sentence by sentence and checks it with an AI detector; returns the lowest-scoring version. Can take up to ~2 minutes.\n\nstyle: professional, academic, casual, creative, simple. strength: light, balanced, strong or 0-100. Optional: language (en, es, fr, de, nl, pt, it), return_versions (boolean)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const d = pm.response.json();",
+              "pm.test('has humanized_text', () => pm.expect(d.humanized_text).to.be.a('string'));",
+              "console.log('AI score', d.ai_score, 'tokens remaining', d.tokens_remaining);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Humanize text (all versions)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Artificial intelligence has transformed the way businesses operate. It enables companies to automate repetitive tasks, analyze large datasets, and make informed decisions.\",\n  \"style\": \"casual\",\n  \"strength\": \"balanced\",\n  \"return_versions\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/humanize",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "humanize"
+          ]
+        },
+        "description": "Same as Humanize, with the text of every version so you can pick the one that reads best."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('versions have text', () => pm.response.json().versions.forEach(v => pm.expect(v).to.have.property('text')));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Detect AI text",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Artificial intelligence has transformed the way businesses operate. It enables companies to automate repetitive tasks, analyze large datasets, and make informed decisions.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/detect",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "detect"
+          ]
+        },
+        "description": "AI score from 0 to 100, a verdict (human under 40, mixed 40-69.9, ai 70+) and the flagged sentences."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const d = pm.response.json();",
+              "pm.test('has verdict', () => pm.expect(['human','mixed','ai']).to.include(d.verdict));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
